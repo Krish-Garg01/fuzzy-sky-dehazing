@@ -3,16 +3,24 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-**Training-free single-image dehazing using a Fuzzy C-Means soft sky membership and continuous transmission blending.**
-
-The Dark Channel Prior (DCP) removes haze well on most outdoor scenes but breaks on bright sky regions, while standard binary sky masks leave a visible step-edge seam at the horizon. This project estimates a continuous **Fuzzy C-Means (FCM) soft sky membership** `mu(x) in [0, 1]` over pixel brightness, saturation, texture, and vertical position, and blends sky and non-sky transmission maps smoothly before guided-filter refinement. Fuzzy parameters are tuned with a **Genetic Algorithm (DEAP)**.
-
-![SOTS-Outdoor 0001 B0 Comparison](results/images/sots_outdoor/B0/0001_compare_hazy_dehazed_clear.png)
-*Example (`SOTS-outdoor 0001`): Hazy input (left), Plain DCP B0 output showing sky over-correction (middle), Clear ground truth (right).*
+**Training-free single-image dehazing using a Fuzzy C-Means soft sky membership, continuous transmission blending, and Genetic Algorithm tuning.**
 
 ---
 
-## Pipeline Overview
+## Project Overview
+
+Outdoor photographs taken in haze or fog follow the atmospheric scattering model $I(x) = J(x)\,t(x) + A\,(1 - t(x))$. The classical **Dark Channel Prior (DCP)** removes haze effectively on textured foreground scenes by assuming every small patch has at least one dark colour channel. However, this assumption fails on **sky regions**, which are bright in all three channels ($I(x) \approx A$). As a result, plain DCP underestimates sky transmission near zero ($t \approx 0.05 \to t_0 = 0.10$) and amplifies noise, JPEG blocks, and colour casts roughly tenfold during recovery.
+
+While binary (hard) sky masks are commonly used to separate sky from non-sky regions, a hard threshold introduces a step discontinuity at the boundary—leaving a visible halo or "cut-out" seam along the horizon.
+
+### Core Approach
+This project replaces hard sky segmentation with a **continuous Fuzzy C-Means (FCM) soft sky membership** $\mu(x) \in [0, 1]$ and blends sky and non-sky transmission estimates smoothly before edge-preserving refinement:
+
+1. **Multi-Feature Sky Cues (`sky_features.py`):** Extracts per-pixel brightness, low HSV saturation, local Sobel gradient smoothness, and normalized vertical position.
+2. **Fuzzy C-Means Soft Membership (`fcm.py`, `sky_membership.py`):** Clusters pixel features via a custom NumPy FCM implementation, identifies the sky cluster automatically, applies a **no-sky guard** (falling back to $\mu = 0$ when no sky is present), and refines the membership with a `smoothstep(a, b)` ramp and guided filter.
+3. **Continuous Transmission Blending (`sky_transmission.py`, `pipelines.py`):** Blends a protected sky transmission map $t_{\text{sky}}(x) = \max(t_{\text{DCP}}(x), t_{\text{floor}})$ with $t_{\text{DCP}}(x)$ using $t_{\text{blend}} = \mu\,t_{\text{sky}} + (1 - \mu)\,t_{\text{DCP}}$, followed by guided-filter refinement ($r = 60, \epsilon = 10^{-4}$).
+4. **Genetic Algorithm Tuning (`tuning/ga.py`):** Tunes the fuzzy-specific parameters (fuzzifier $m$, feature weights, smoothstep bounds, smoothing radius, and $t_{\text{floor}}$) with DEAP on a disjoint outdoor tuning set.
+5. **Controlled Evaluation (`metrics.py`, `eval/`):** Compares the soft fuzzy blend (`F0`, `F1`) against plain DCP (`B0`), a tuned hard-threshold mask (`B1`), and a hardened FCM mask (`B2`, using the exact same clustering with $\mu_{\text{raw}} > 0.5$) across full-image, sky-only, non-sky, pixel saturation, and horizon-seam metrics.
 
 ```text
 hazy image -> atmospheric light A, coarse t_DCP
@@ -95,7 +103,7 @@ save_image("results/out.png", result.J)
 
 ---
 
-## Running the Benchmark
+## Running the Experiments
 
 ```bash
 # 1. Tune hard-mask threshold (B1)
@@ -104,38 +112,13 @@ python scripts/tune_threshold.py --config configs/default.yaml
 # 2. Tune fuzzy parameters with Genetic Algorithm (F1)
 python scripts/tune_ga.py --config configs/ga.yaml
 
-# 3. Run benchmark across datasets
+# 3. Run benchmark across datasets (saves CSVs and visual outputs under results/)
 python scripts/run_benchmark.py --config configs/default.yaml \
     --datasets sots_outdoor ohaze --methods B0 B1 B2 F0 F1
 
 # 4. Generate figures and summary tables
 python scripts/make_figures.py --results results/per_image --out results/figures
 ```
-
----
-
-## Results
-
-**SOTS-outdoor (500 test pairs)**
-
-| Method | PSNR (dB) | SSIM | dE2000 | Sky PSNR | Sky dE2000 | Non-Sky PSNR | Sky Sat. % | Seam Error |
-|---|---|---|---|---|---|---|---|---|
-| **B0 Plain DCP (all)** | 17.05 | 0.8574 | 10.75 | 15.30 | 14.83 | 20.68 | 4.12% | 0.1459 |
-| **B0 Plain DCP (sky-heavy)** | 15.97 | 0.8410 | 11.85 | 13.10 | 18.22 | 21.27 | 4.55% | 0.1584 |
-| **B1 Hard Threshold** | | | | | | | | |
-| **B2 Hard FCM** | | | | | | | | |
-| **F0 Fuzzy (Default)** | | | | | | | | |
-| **F1 Fuzzy + GA** | | | | | | | | |
-
-**O-HAZE (45 real outdoor pairs)**
-
-| Method | PSNR (dB) | SSIM | dE2000 | Sky PSNR | Sky dE2000 | Non-Sky PSNR | Sky Sat. % | Seam Error |
-|---|---|---|---|---|---|---|---|---|
-| **B0 Plain DCP (all)** | 15.86 | 0.6448 | 18.11 | 14.67 | 17.00 | 16.03 | 2.40% | 0.1608 |
-| **B1 Hard Threshold** | | | | | | | | |
-| **B2 Hard FCM** | | | | | | | | |
-| **F0 Fuzzy (Default)** | | | | | | | | |
-| **F1 Fuzzy + GA** | | | | | | | | |
 
 ---
 
