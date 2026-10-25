@@ -1,0 +1,2 @@
+dataset,method,n_images,psnr_mean,psnr_std,psnr_median,ssim_mean,ssim_std,ssim_median,runtime_median_s,seed
+sots_outdoor,B0,500,17.0486,3.5214,16.7688,0.8574,0.0555,0.8643,0.0709,42

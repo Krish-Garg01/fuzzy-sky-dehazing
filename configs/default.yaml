@@ -1,0 +1,30 @@
+seed: 42
+dcp:
+  patch: 15
+  omega: 0.95
+  t0: 0.1
+  top_frac: 0.001
+guided_filter:        # for t refinement, shared by every method
+  r: 60
+  eps: 1.0e-4
+sky:
+  features: [brightness, low_saturation, texture, vertical_pos]
+  feature_weights: [1.0, 1.0, 1.0, 1.0]
+  clusters: 3
+  fuzzifier: 2.0
+  fcm_samples: 20000
+  fcm_max_iter: 100
+  fcm_tol: 1.0e-4
+  smoothstep: {a: 0.2, b: 0.8}
+  mu_gf: {r: 20, eps: 1.0e-3}
+  t_sky_mode: floor      # floor | tolerance
+  t_floor: 0.8
+  tolerance_K: 0.08
+  guard:
+    min_brightness: 0.5
+    min_area_frac: 0.01
+    max_mean_y: 0.6
+eval:
+  seam_band_px: 10
+  sky_heavy_threshold: 0.20
+  bootstrap_resamples: 10000

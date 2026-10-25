@@ -1,0 +1,25 @@
+seed: 42
+population_size: 24
+generations: 15
+tournament_size: 3
+cx_prob: 0.7
+cx_alpha: 0.5
+mut_prob: 0.3
+mut_sigma_frac: 0.10
+hall_of_fame: 2
+downscale_max_side: 320
+lambda_sat: 20.0
+val_fraction: 0.2
+n_jobs: -1
+
+bounds:
+  m: [1.5, 3.0]
+  w_f1: [0.0, 2.0]
+  w_f2: [0.0, 2.0]
+  w_f3: [0.0, 2.0]
+  w_f4: [0.0, 2.0]
+  a: [0.0, 0.5]
+  b: [0.5, 1.0]
+  r_mu: [8.0, 40.0]
+  t_floor: [0.5, 1.0]
+  K: [0.02, 0.3]

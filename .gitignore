@@ -1,0 +1,47 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Internal build spec, changelog, project doc, and local dataset helper scripts
+SPEC.md
+CHANGELOG.md
+report/PROJECT_DOCUMENTATION.md
+report/assets/
+scripts/download_datasets.py
+scripts/generate_synthetic_data.py
+
+# Raw downloaded datasets (hundreds of MBs; keep sky_fraction.csv tracked)
+data/_downloads/
+data/reside/
+data/ohaze/
+data/rtts_subset/
+data/synthetic_demo/
+data/sky_masks/*/*.png
+data/sky_masks/*/_previews/
+
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

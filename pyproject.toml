@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fsdehaze"
+version = "0.1.0"
+description = "Fuzzy Sky-Aware Transmission Refinement for Training-Free Single-Image Dehazing"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "scipy",
+    "opencv-python",
+    "scikit-image",
+    "scikit-learn",
+    "pandas",
+    "matplotlib",
+    "tqdm",
+    "pyyaml",
+    "joblib",
+    "deap",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "scikit-fuzzy",
+    "ruff",
+    "black",
+]
+tools = [
+    "torch",
+    "transformers",
+    "pyiqa",
+    "streamlit",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = ["-p", "no:pytest_ethereum"]
+

@@ -1,0 +1,23 @@
+sots_outdoor:
+  hazy_dir: data/reside/sots_outdoor/hazy
+  clear_dir: data/reside/sots_outdoor/clear
+  sky_mask_dir: data/sky_masks/sots_outdoor
+  id_rule: prefix_before_underscore
+
+ots_subset:
+  hazy_dir: data/reside/ots_subset/hazy
+  clear_dir: data/reside/ots_subset/clear
+  sky_mask_dir: data/sky_masks/ots_subset
+  id_rule: prefix_before_underscore
+
+ohaze:
+  hazy_dir: data/ohaze/hazy
+  clear_dir: data/ohaze/GT
+  sky_mask_dir: data/sky_masks/ohaze
+  id_rule: ohaze
+
+rtts_subset:
+  hazy_dir: data/rtts_subset
+  clear_dir: null
+  sky_mask_dir: null
+  id_rule: exact_stem

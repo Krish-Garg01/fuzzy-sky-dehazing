@@ -1,0 +1,13 @@
+numpy
+scipy
+opencv-python
+scikit-image
+scikit-learn
+pandas
+matplotlib
+tqdm
+pyyaml
+joblib
+deap
+pytest
+scikit-fuzzy
