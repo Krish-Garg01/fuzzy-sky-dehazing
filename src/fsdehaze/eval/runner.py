@@ -45,10 +45,9 @@ def dispatch_method(
     if m in ("B0", "DCP"):
         return dehaze_dcp(img, cfg)
     if m in ("B1", "HARD_THRESHOLD"):
-        thresh = float(tau) if tau is not None else float(cfg.get("sky", {}).get("hard_tau", 0.5))
-        return dehaze_hard_threshold(img, cfg, tau=thresh)
+        return dehaze_hard_threshold(img, cfg, tau=tau)
     if m in ("B2", "HARD_FCM"):
-        return dehaze_hard_fcm(img, cfg)
+        return dehaze_hard_fcm(img, cfg, params=params)
     if m in ("F0", "FUZZY"):
         return dehaze_fuzzy(img, cfg, params=None)
     if m == "F1":

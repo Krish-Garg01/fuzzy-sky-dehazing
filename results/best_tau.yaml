@@ -1,0 +1,12 @@
+tau: 0.65
+dataset: ots_subset
+seed: 42
+n_train: 96
+n_val: 24
+lambda_sat: 20.0
+train_fitness: 26.76296399472953
+train_psnr: 22.875524202751574
+train_sky_psnr: 30.69553053395065
+val_fitness: 27.2298888898077
+val_psnr: 22.42702729356334
+val_sky_psnr: 32.07975282718484
