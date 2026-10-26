@@ -40,6 +40,7 @@ data/sky_masks/*/*.png
 data/sky_masks/*/_previews/
 results/images/sots_outdoor/sky_membership/
 results/images/sots_outdoor/phase4_checks/
+results/figures/
 
 
 # OS / IDE

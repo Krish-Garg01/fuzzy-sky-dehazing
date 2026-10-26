@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
+from fsdehaze.config import load_config
 from fsdehaze.io_utils import Pair, load_image, load_mask, save_image
 from fsdehaze.metrics import evaluate_all
 from fsdehaze.pipelines import (
@@ -33,6 +34,15 @@ REQUIRED_METRIC_COLS: set[str] = {
 }
 
 
+def _resolve_f1_params(params: dict[str, Any] | None) -> dict[str, Any] | None:
+    if params is not None:
+        return params
+    default_path = Path("results/best_params.yaml")
+    if default_path.is_file():
+        return load_config(default_path)
+    return None
+
+
 def dispatch_method(
     method: str,
     img: np.ndarray,
@@ -47,11 +57,11 @@ def dispatch_method(
     if m in ("B1", "HARD_THRESHOLD"):
         return dehaze_hard_threshold(img, cfg, tau=tau)
     if m in ("B2", "HARD_FCM"):
-        return dehaze_hard_fcm(img, cfg, params=params)
+        return dehaze_hard_fcm(img, cfg, params=None)
     if m in ("F0", "FUZZY"):
         return dehaze_fuzzy(img, cfg, params=None)
     if m == "F1":
-        return dehaze_fuzzy(img, cfg, params=params)
+        return dehaze_fuzzy(img, cfg, params=_resolve_f1_params(params))
     raise ValueError(f"Unknown method identifier: {method!r}")
 
 

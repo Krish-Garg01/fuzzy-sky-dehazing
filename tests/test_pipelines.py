@@ -122,3 +122,25 @@ def test_b1_b2_f0_shapes_bounds_and_sky_transmission_lift() -> None:
     assert sky_t_b1 > 0.65
     assert sky_t_b2 > 0.65
     assert sky_t_f0 > 0.65
+
+
+def test_ga_repair_and_individual_to_params() -> None:
+    """repair_individual clips bounds, enforces b - a >= 0.1, and maps to valid dehaze_fuzzy params."""
+    from fsdehaze.tuning.ga import GENE_NAMES, individual_to_params, repair_individual
+
+    ga_cfg = load_config("configs/ga.yaml")
+    bounds = ga_cfg["bounds"]
+
+    # Out-of-bounds genes with inverted smoothstep (a=0.49, b=0.50) and all-zero feature weights
+    bad_ind = [0.5, 0.0, 0.0, 0.0, 0.0, 0.49, 0.50, 25.4, 1.5, -0.1]
+    repaired = repair_individual(bad_ind, bounds)
+
+    for idx, name in enumerate(GENE_NAMES):
+        lo, hi = bounds[name]
+        assert lo <= repaired[idx] <= hi
+
+    params = individual_to_params(repaired)
+    assert params["b"] - params["a"] >= 0.10 - 1e-6
+    assert isinstance(params["r_mu"], int)
+    assert sum(params["feature_weights"]) >= 0.20
+

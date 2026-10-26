@@ -1,0 +1,36 @@
+m: 1.8082
+fuzzifier: 1.8082
+w_f1: 1.6211
+w_f2: 0.3206
+w_f3: 1.9598
+w_f4: 0.5256
+feature_weights:
+- 1.6211
+- 0.3206
+- 1.9598
+- 0.5256
+a: 0.0
+b: 0.9236
+r_mu: 32
+t_floor: 0.8803
+K: 0.2556
+tolerance_K: 0.2556
+t_sky_mode: floor
+meta:
+  seed: 42
+  population_size: 24
+  generations: 15
+  n_train: 96
+  n_val: 24
+  downscale_max_side: 320
+  lambda_sat: 20.0
+  train_fitness: 26.826204998086876
+  train_psnr: 23.470476489324017
+  train_sky_psnr: 31.573081327443862
+  train_sky_iou: 0.8657142781083352
+  val_fitness: 27.103845433882867
+  val_psnr: 22.422633334106184
+  val_sky_psnr: 32.75140057070507
+  val_sky_iou: 0.8825883759676626
+  f0_train_fitness: 25.499070747552025
+  f0_val_fitness: 26.406809307904307
