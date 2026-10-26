@@ -227,11 +227,32 @@ def seam_errors(
     return seam_l1, seam_grad
 
 
+def prepare_gt_cache(
+    G: np.ndarray,
+    sky_mask: np.ndarray | None = None,
+    seam_width: int = 10,
+) -> dict[str, Any]:
+    """Precompute ground-truth Lab representation, gradient magnitude, and horizon band."""
+    lab_G = rgb2lab(np.clip(G, 0.0, 1.0).astype(np.float32, copy=False))
+    grad_G = _gradient_magnitude(G)
+    band = (
+        boundary_band(sky_mask, width=seam_width)
+        if sky_mask is not None
+        else None
+    )
+    return {
+        "lab_G": lab_G,
+        "grad_G": grad_G,
+        "band": band,
+    }
+
+
 def evaluate_all(
     G: np.ndarray,
     result: Result,
     sky_mask: np.ndarray | None = None,
     seam_width: int = 10,
+    gt_cache: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Compute the complete metric suite for a single dehazed image.
 
@@ -240,6 +261,7 @@ def evaluate_all(
         result: Pipeline `Result` containing `J`, `J_raw`, `A`, `info`.
         sky_mask: Optional boolean ground-truth sky mask of shape (H, W).
         seam_width: Horizon boundary band width in pixels (default 10).
+        gt_cache: Optional precomputed ground-truth dictionary from `prepare_gt_cache`.
 
     Returns:
         Dictionary of metrics:
@@ -264,7 +286,11 @@ def evaluate_all(
 
     full_psnr = psnr(G, J)
     full_ssim = ssim(G, J)
-    de_map = ciede2000_map(G, J)
+    if gt_cache is not None and "lab_G" in gt_cache:
+        lab_J = rgb2lab(np.clip(J, 0.0, 1.0).astype(np.float32, copy=False))
+        de_map = deltaE_ciede2000(gt_cache["lab_G"], lab_J).astype(np.float32)
+    else:
+        de_map = ciede2000_map(G, J)
     full_de = float(np.mean(de_map, dtype=np.float64))
     sat_full = saturated_fraction(J_raw, mask=None)
 
@@ -277,7 +303,18 @@ def evaluate_all(
         nonsky_p = masked_psnr(G, J, m_nonsky)
         nonsky_de = masked_mean(de_map, m_nonsky)
         sat_sky = saturated_fraction(J_raw, mask=m_sky)
-        s_l1, s_grad = seam_errors(G, J, m_sky, width=seam_width)
+        if gt_cache is not None and gt_cache.get("band") is not None:
+            band = gt_cache["band"]
+            if not np.any(band):
+                s_l1, s_grad = float("nan"), float("nan")
+            else:
+                abs_diff = np.mean(np.abs(J.astype(np.float32) - G.astype(np.float32)), axis=2)
+                s_l1 = float(np.mean(abs_diff[band], dtype=np.float64))
+                grad_J = _gradient_magnitude(J)
+                grad_diff = np.abs(grad_J - gt_cache["grad_G"])
+                s_grad = float(np.mean(grad_diff[band], dtype=np.float64))
+        else:
+            s_l1, s_grad = seam_errors(G, J, m_sky, width=seam_width)
     else:
         sky_frac = float("nan")
         sky_p = float("nan")

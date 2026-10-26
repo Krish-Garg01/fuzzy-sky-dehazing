@@ -94,7 +94,11 @@ def _blend_and_refine_transmission(
     return t_final, t_blend, t_sky
 
 
-def dehaze_dcp(img: np.ndarray, cfg: dict[str, Any]) -> Result:
+def dehaze_dcp(
+    img: np.ndarray,
+    cfg: dict[str, Any],
+    precomputed: dict[str, Any] | None = None,
+) -> Result:
     """Run the plain Dark Channel Prior baseline (Method B0).
 
     Pipeline:
@@ -107,6 +111,7 @@ def dehaze_dcp(img: np.ndarray, cfg: dict[str, Any]) -> Result:
     Args:
         img: Hazy RGB image of shape (H, W, 3), dtype float32, in [0, 1].
         cfg: Configuration dictionary containing `dcp` and `guided_filter` sections.
+        precomputed: Optional cache dictionary containing precomputed `"dark"`, `"A"`, `"t_dcp"`.
 
     Returns:
         Result containing dehazed image `J`, unclipped `J_raw`, refined `t`, `A`, and debug info.
@@ -122,9 +127,16 @@ def dehaze_dcp(img: np.ndarray, cfg: dict[str, Any]) -> Result:
     gf_r = int(gf_cfg.get("r", 60))
     gf_eps = float(gf_cfg.get("eps", 1.0e-4))
 
-    dark = dark_channel(img, patch=patch)
-    A = estimate_atmospheric_light(img, dark, top_frac=top_frac)
-    t_dcp = transmission_dcp(img, A, omega=omega, patch=patch)
+    cache = precomputed or {}
+    dark = cache.get("dark")
+    if dark is None:
+        dark = dark_channel(img, patch=patch)
+    A = cache.get("A")
+    if A is None:
+        A = estimate_atmospheric_light(img, dark, top_frac=top_frac)
+    t_dcp = cache.get("t_dcp")
+    if t_dcp is None:
+        t_dcp = transmission_dcp(img, A, omega=omega, patch=patch)
 
     gray = rgb_to_gray(img)
     t_refined = guided_filter(gray, t_dcp, r=gf_r, eps=gf_eps)
@@ -172,6 +184,7 @@ def dehaze_hard_threshold(
     cfg: dict[str, Any],
     tau: float | None = None,
     params: dict[str, Any] | None = None,
+    precomputed: dict[str, Any] | None = None,
 ) -> Result:
     """Run DCP + hard-thresholded sky mask baseline (Method B1).
 
@@ -183,6 +196,7 @@ def dehaze_hard_threshold(
         cfg: Base configuration dictionary.
         tau: Threshold in [0, 1] on `sky_score` (if None, loads `results/best_tau.yaml` or 0.65).
         params: Optional parameter overrides for `t_sky`.
+        precomputed: Optional cache dictionary containing `"dark"`, `"A"`, `"t_dcp"`, `"features"`.
 
     Returns:
         Result with `mask=M`, `mu=None`, dehazed `J`, `J_raw`, `t`, `A`, and `info`.
@@ -195,11 +209,20 @@ def dehaze_hard_threshold(
 
     resolved_tau = _resolve_default_tau(cfg, tau)
 
-    dark = dark_channel(img, patch=patch)
-    A = estimate_atmospheric_light(img, dark, top_frac=top_frac)
-    t_dcp = transmission_dcp(img, A, omega=omega, patch=patch)
+    cache = precomputed or {}
+    dark = cache.get("dark")
+    if dark is None:
+        dark = dark_channel(img, patch=patch)
+    A = cache.get("A")
+    if A is None:
+        A = estimate_atmospheric_light(img, dark, top_frac=top_frac)
+    t_dcp = cache.get("t_dcp")
+    if t_dcp is None:
+        t_dcp = transmission_dcp(img, A, omega=omega, patch=patch)
 
-    mask, mask_info = estimate_hard_threshold_mask(img, cfg, tau=resolved_tau)
+    mask, mask_info = estimate_hard_threshold_mask(
+        img, cfg, tau=resolved_tau, precomputed_features=cache.get("features")
+    )
     mask_f = mask.astype(np.float32)
 
     t_final, t_blend, t_sky = _blend_and_refine_transmission(
@@ -230,6 +253,7 @@ def dehaze_hard_fcm(
     img: np.ndarray,
     cfg: dict[str, Any],
     params: dict[str, Any] | None = None,
+    precomputed: dict[str, Any] | None = None,
 ) -> Result:
     """Run DCP + hardened FCM sky mask baseline (Method B2).
 
@@ -240,6 +264,7 @@ def dehaze_hard_fcm(
         img: Hazy RGB image of shape (H, W, 3), dtype float32, in [0, 1].
         cfg: Base configuration dictionary.
         params: Optional parameter overrides.
+        precomputed: Optional cache dictionary containing `"dark"`, `"A"`, `"t_dcp"`, `"features"`.
 
     Returns:
         Result with `mask=M`, `mu=None`, dehazed `J`, `J_raw`, `t`, `A`, and `info`.
@@ -250,11 +275,20 @@ def dehaze_hard_fcm(
     t0 = float(dcp_cfg.get("t0", 0.1))
     top_frac = float(dcp_cfg.get("top_frac", 0.001))
 
-    dark = dark_channel(img, patch=patch)
-    A = estimate_atmospheric_light(img, dark, top_frac=top_frac)
-    t_dcp = transmission_dcp(img, A, omega=omega, patch=patch)
+    cache = precomputed or {}
+    dark = cache.get("dark")
+    if dark is None:
+        dark = dark_channel(img, patch=patch)
+    A = cache.get("A")
+    if A is None:
+        A = estimate_atmospheric_light(img, dark, top_frac=top_frac)
+    t_dcp = cache.get("t_dcp")
+    if t_dcp is None:
+        t_dcp = transmission_dcp(img, A, omega=omega, patch=patch)
 
-    mask, fcm_info = estimate_hard_fcm_mask(img, cfg, params=params, threshold=0.5)
+    mask, fcm_info = estimate_hard_fcm_mask(
+        img, cfg, params=params, threshold=0.5, precomputed_features=cache.get("features")
+    )
     mask_f = mask.astype(np.float32)
 
     t_final, t_blend, t_sky = _blend_and_refine_transmission(
