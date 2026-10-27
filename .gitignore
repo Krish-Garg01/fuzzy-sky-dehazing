@@ -22,11 +22,11 @@ htmlcov/
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# Internal build spec, changelog, project doc, and local dataset helper scripts
+# Internal build spec, changelog, project doc, and local report / scripts
 SPEC.md
 CHANGELOG.md
-report/PROJECT_DOCUMENTATION.md
-report/assets/
+report/*
+!report/.gitkeep
 scripts/download_datasets.py
 scripts/generate_synthetic_data.py
 

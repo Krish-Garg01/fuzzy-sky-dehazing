@@ -116,8 +116,8 @@ python scripts/tune_ga.py --config configs/ga.yaml
 python scripts/run_benchmark.py --config configs/default.yaml \
     --datasets sots_outdoor ohaze --methods B0 B1 B2 F0 F1
 
-# 4. Generate figures and summary tables
-python scripts/make_figures.py --results results/per_image --out results/figures
+# 4. Generate all publication figures (1-10) and summary tables
+python scripts/make_figures.py
 ```
 
 ---
@@ -130,7 +130,8 @@ fuzzy-sky-dehazing/
 ├── configs/                 # default.yaml, ga.yaml, datasets.yaml
 ├── src/fsdehaze/            # dcp, guided_filter, fcm, sky_*, pipelines, metrics, tuning, eval, viz
 ├── scripts/                 # make_sky_gt, run_benchmark, tune_ga, tune_threshold, make_figures
-├── tests/                   # pytest unit tests
+├── tests/                   # pytest unit tests (34 passed)
+├── report/                  # course report (main.tex, references.bib, REPORT.md, figures/)
 ├── data/                    # datasets (git-ignored) and sky_fraction.csv
 └── results/                 # per_image CSVs, summary tables, visual outputs
 ```
